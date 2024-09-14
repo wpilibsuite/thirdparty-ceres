@@ -1,5 +1,4 @@
-vcpkg_installed/
-build/
-.gradle/
-gradleDir/
-.vscode/
+/vcpkg_installed
+/build
+/.gradle
+/gradleDir
