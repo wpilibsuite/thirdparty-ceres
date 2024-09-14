@@ -1,0 +1,14 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "dependencies": [
+      {
+        
+          "name": "ceres",
+          "features": [
+            "eigensparse",
+            "suitesparse"
+          ] 
+      }
+    ],
+    "builtin-baseline": "29b2ea2d4b6197e66ef346e62ccbba35b55b7de5"
+  }

@@ -2,7 +2,7 @@ import java.security.MessageDigest
 import org.gradle.internal.os.OperatingSystem
 
 import java.nio.file.Files
-import java.nio.file.Paths;
+import java.nio.file.Paths
 
 apply plugin: 'maven-publish'
 
@@ -59,6 +59,8 @@ def getTriplet() {
         triplet_arch = "x86"
     } else if (os_arch == 'aarch64' || os_arch == 'arm64') {
         triplet_arch = "arm64"
+    } else {
+        triplet_arch = "x64"
     }
 
     if (OperatingSystem.current().isWindows()) {
@@ -124,6 +126,7 @@ def knownSubdirName = 'vcpkg'
 
 def outputClassifierStatic = project.ext.platformClassifier + 'static'
 def outputClassifierDebugStatic = project.ext.platformClassifier + 'debug/static'
+System.out.println(triplet)
 
 
 task copyAllOutputs(type: Copy) {
@@ -159,7 +162,7 @@ task cppSourcesZip(type: Zip) {
     from(licenseFile) {
         into '/'
     }
-    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg").resolve("buildtrees")
+    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve("buildtrees")
     from(resolvedDir.toFile()) {
         into '/source'
         include '**/*.cpp', '**/*.cc'
@@ -176,7 +179,7 @@ task cppHeadersZip(type: Zip) {
     from(licenseFile) {
         into '/'
     }
-    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg").resolve("installed").resolve(triplet).resolve("include")
+    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("include")
     from(resolvedDir.toFile()) {
         into '/include'
         include '**/*.hpp', '**/*.h'
@@ -194,7 +197,7 @@ task cppLibsZipStatic(type: Zip) {
     from(licenseFile) {
         into '/'
     }
-    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg").resolve("installed").resolve(triplet).resolve("lib")
+    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("lib")
     from(resolvedDir.toFile()) {
         into project.platformPath + '/static'
         include '**/*.a'
@@ -212,7 +215,7 @@ task cppLibsZipStaticDebug(type: Zip) {
     from(licenseFile) {
         into '/'
     }
-    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg").resolve("installed").resolve(triplet).resolve("debug").resolve("lib")
+    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug").resolve("lib")
     from(resolvedDir.toFile()) {
         into project.platformPath + '/debug/static'
         include '**/*.a'
@@ -234,13 +237,8 @@ if (!project.hasProperty('skipSources')) {
     addTaskToCopyAllOutputs(cppHeadersZip)
 }
 
-if (!project.hasProperty('jenkinsBuild')) {
-    artifacts {
-        archives cppHeadersZip
-        archives cppSourcesZip
-        archives cppLibsZipStatic
-        archives cppLibsZipStaticDebug
-    }
+if (project.hasProperty('runmerge')) {
+    apply from: 'merge.gradle'
 }
 
 model {
@@ -248,7 +246,6 @@ model {
         publications {
             cpp(MavenPublication) {
                 artifact cppHeadersZip
-                artifact cppSourcesZip
                 artifact cppLibsZipStatic
                 artifact cppLibsZipStaticDebug
 
