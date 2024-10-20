@@ -21,89 +21,41 @@ publishing {
     }
 }
 
-def getPlatform() {
-    def platform
-    def os_name = System.getProperty("os.name")
-    def os_arch = System.getProperty("os.arch")
-
-    if (os_arch == 'amd64') {
-        os_arch = 'x86_64'
-    } else if (os_arch == 'i386') {
-        os_arch = 'x86'
-    } else if (os_arch == 'aarch64' || os_arch == 'arm64') {
-        os_arch = 'arm64'
-    }
-
-    if (OperatingSystem.current().isWindows()) {
-        platform = "windows-${os_arch}"
-    } else if (OperatingSystem.current().isLinux()) {
-        platform = "linux-${os_arch}"
-    } else if (OperatingSystem.current().isMacOsX()) {
-        platform = "osx-${os_arch}"
-    } else {
-        platform = "${os_name}-${os_arch}"
-    }
-    return platform
-}
-
 def getTriplet() {
-    def platform
-    def os_name = System.getProperty("os.name")
-    def os_arch = System.getProperty("os.arch")
-    def triplet_arch = ""
-    def triplet_name = ""
-
-    if (os_arch == 'amd64') {
-        triplet_arch = "x64"
-    } else if (os_arch == 'i386') {
-        triplet_arch = "x86"
-    } else if (os_arch == 'aarch64' || os_arch == 'arm64') {
-        triplet_arch = "arm64"
-    } else {
-        triplet_arch = "x64"
+    def fileNameFinder = new FileNameFinder()
+    for (File folder : file("$projectDir/vcpkg_installed").listFiles()) {
+        if (folder.name == project.platform) {
+            println folder.name
+            return folder.name
+        } 
     }
-
-    if (OperatingSystem.current().isWindows()) {
-        triplet_name = "windows"
-    } else if (OperatingSystem.current().isLinux()) {
-        triplet_name = "linux"
-    } else if (OperatingSystem.current().isMacOsX()) {
-        triplet_name = "osx"
-    }
-    return triplet_arch + "-" + triplet_name
+    throw new RuntimeException("Platform not found");
 }
 
-def getPlatformPath(platform) {
-    if (platform == "linux-athena") {
-        return "linux/athena"
-    } else if (platform == "linux-arm32") {
+
+def getPlatformPath(triplet) {
+    if (triplet == "arm32-linux") {
         return "linux/arm32"
-    } else if (platform == "linux-arm64") {
+    } else if (triplet == "arm64-linux") {
         return "linux/arm64"
-    } else if (platform == "linux-x86") {
-        return "linux/x86"
-    } else if (platform == "linux-x86_64") {
+    } else if (triplet == "x64-linux") {
         return "linux/x86-64"
-    } else if (platform == "osx-x86") {
-        return "osx/x86"
-    } else if (platform == "osx-x86_64") {
+    } else if (triplet == "x64-osx") {
         return "osx/x86-64"
-    } else if (platform == "osx-arm64") {
+    } else if (triplet == "arm64-osx") {
         return "osx/arm64"
-    } else if (platform == "windows-x86") {
-        return "windows/x86"
-    } else if (platform == "windows-x86_64") {
+    } else if (triplet == "x64-windows") {
         return "windows/x86-64"
-    } else if (platform == "windows-arm64") {
+    } else if (triplet == "arm64-windows") {
         return "windows/arm64"
     } else {
         return ""
     }
 }
 
-ext.platform = getPlatform()
-ext.platformPath = getPlatformPath(ext.platform)
-ext.platformClassifier = project.platform.replaceFirst('-', '').replace('_', '-')
+ext.triplet = getTriplet()
+ext.platformPath = getPlatformPath(ext.triplet)
+ext.platformClassifier = ext.platformPath.replaceFirst('/', '')
 
 ext.repo = "thirdparty-ceres"
 
@@ -150,23 +102,6 @@ task outputVersions() {
     }
 }
 
-task cppSourcesZip(type: Zip) {
-    destinationDirectory = outputsFolder
-    archiveBaseName = zipBaseName
-    archiveClassifier = "sources"
-
-    from(licenseFile) {
-        into '/'
-    }
-    def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve("buildtrees")
-    from(resolvedDir.toFile()) {
-        into '/source'
-        include '**/*.cpp', '**/*.cc'
-    }
-
-    includeEmptyDirs = false
-}
-
 task cppHeadersZip(type: Zip) {
     dependsOn outputVersions
     destinationDirectory = outputsFolder
@@ -197,6 +132,7 @@ task cppLibsZipStatic(type: Zip) {
     def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("lib")
     from(resolvedDir.toFile()) {
         into project.platformPath + '/static'
+        exclude '**/pkgconfig'
         include '**/*.a'
         include '**/*.lib'
         include '**/*.pdb'
@@ -214,7 +150,8 @@ task cppLibsZipStaticDebug(type: Zip) {
     }
     def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug").resolve("lib")
     from(resolvedDir.toFile()) {
-        into project.platformPath + '/debug/static'
+        into project.platformPath + '/static'
+        exclude '**/pkgconfig'
         include '**/*.a'
         include '**/*.lib'
         include '**/*.pdb'
@@ -228,17 +165,6 @@ if (!project.hasProperty('skipRelease')) {
 if (!project.hasProperty('skipDebug')) {
     addTaskToCopyAllOutputs(cppLibsZipStaticDebug)
 }
-
-if (!project.hasProperty('skipSources')) {
-    addTaskToCopyAllOutputs(cppSourcesZip)
-    addTaskToCopyAllOutputs(cppHeadersZip)
-}
-
-if (project.hasProperty('runmerge')) {
-    apply from: 'merge.gradle'
-}
-
-
 
 model {
     publishing {
