@@ -9,9 +9,7 @@ def files = project.files(downloadsFolder)
 
 def constantNames = [
     'version.txt',
-    'ceres-cpp_CLS-headers.zip',
-    'ceres-cpp_CLS-osxarm64static.zip',
-    'ceres-cpp_CLSdebug-osxarm64staticdebug.zip'
+    'ceres-cpp_CLS-headers.zip'
 ]
 
 def constantFiles = []
