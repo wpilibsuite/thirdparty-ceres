@@ -108,7 +108,7 @@ task cppHeadersZip(type: Zip) {
     }
     def resolvedDir = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("include")
     from(resolvedDir.toFile()) {
-        into '/include'
+        into '/'
         include '**/*.hpp', '**/*.h'
     }
 
