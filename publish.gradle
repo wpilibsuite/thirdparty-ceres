@@ -27,7 +27,7 @@ ext.libVersion = "${ext.version.replace(".", "")}"
 def getTriplet() {
     def fileNameFinder = new FileNameFinder()
     for (File folder : file("$projectDir/vcpkg_installed").listFiles()) {
-        if (folder.name == project.platform) {
+        if (folder.name == "x64-linux") {
             println folder.name
             return folder.name
         } 
@@ -117,58 +117,104 @@ task cppHeadersZip(type: Zip) {
     includeEmptyDirs = false
 }
 
+task mergeStaticLibs(type: Exec) {
+    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
+
+    if (project.platformPath.startsWith('windows')) {
+        workingDir buildDirectory.resolve("lib").toString()
+        executable 'lib'
+        def inputFiles = ["libamd${project.libVersion}", "libbtf${project.libVersion}", "libcamd${project.libVersion}", "libccolamd${project.libVersion}", "libceres${project.libVersion}", "libcholmod${project.libVersion}", "libcxsparse${project.libVersion}", "libgflags${project.libVersion}", "libGKlib${project.libVersion}", "libglog${project.libVersion}", "libklu${project.libVersion}", "liblapack${project.libVersion}", "libldl${project.libVersion}", "libmetis${project.libVersion}", "libopenblas${project.libVersion}", "libspqr${project.libVersion}", "libsuitesparseconfig${project.libVersion}", "libumfpack${project.libVersion}"]
+        def setArgs = ["/OUT:opencv${project.libVersion}.lib"]
+        inputFiles.each {
+            def inFile = it + ".lib"
+            setArgs << inFile
+        }
+        args = setArgs
+    } else if (project.platformPath.startsWith('osx')) {
+        executable 'libtool'
+        workingDir buildDirectory.resolve("lib").toString()
+        def libDirectory = buildDirectory.toFile()
+        args '-static'
+        args '-o'
+        args "libceres${project.libVersion}.a"
+        doFirst {
+            libDirectory.eachFile() {
+                if (!it.name.endsWith('.a') || it.name == "libceres${project.libVersion}.a".toString()) {
+                    return
+                }
+                args it.absolutePath
+            }
+        }
+        inputs.dir buildDirectory.resolve("lib").toFile()
+    } else {
+        workingDir buildDirectory.resolve("lib").toString()
+        executable 'ar'
+        args = ['-M']
+        def inputFiles = ["libamd", "libbtf", "libcamd", "libccolamd", "libceres", "libcholmod", "libcxsparse", "libgflags", "libGKlib", "libglog", "libklu", "liblapack", "libldl", "libmetis", "libopenblas", "libspqr", "libsuitesparseconfig", "libumfpack"]
+
+        def inputString = "create libceres${project.libVersion}.a\n"
+        inputFiles.each {
+            def inFile = 'addlib ' + it + ".a\n"
+            inputString += inFile
+        }
+
+        inputString += "save\nend\n"
+        standardInput = new ByteArrayInputStream(inputString.getBytes())
+    }
+}
+
+task mergeDebugStaticLibs(type: Exec) {
+    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
+
+    if (project.platformPath.startsWith('windows')) {
+        workingDir buildDirectory.resolve("lib").toString()
+        executable 'lib'
+        def inputFiles = ["libamd${project.libVersion}", "libbtf${project.libVersion}", "libcamd${project.libVersion}", "libccolamd${project.libVersion}", "libceres${project.libVersion}", "libcholmod${project.libVersion}", "libcxsparse${project.libVersion}", "libgflags${project.libVersion}", "libGKlib${project.libVersion}", "libglog${project.libVersion}", "libklu${project.libVersion}", "liblapack${project.libVersion}", "libldl${project.libVersion}", "libmetis${project.libVersion}", "libopenblas${project.libVersion}", "libspqr${project.libVersion}", "libsuitesparseconfig${project.libVersion}", "libumfpack${project.libVersion}"]
+        def setArgs = ["/OUT:opencv${project.libVersion}.lib"]
+        inputFiles.each {
+            def inFile = it + ".lib"
+            setArgs << inFile
+        }
+        args = setArgs
+    } else if (project.platformPath.startsWith('osx')) {
+        executable 'libtool'
+        workingDir buildDirectory.resolve("lib").toString()
+        def libDirectory = buildDirectory.toFile()
+        args '-static'
+        args '-o'
+        args "libceres${project.libVersion}.a"
+        doFirst {
+            libDirectory.eachFile() {
+                if (!it.name.endsWith('.a') || it.name == "libceres${project.libVersion}.a".toString()) {
+                    return
+                }
+                args it.absolutePath
+            }
+        }
+        inputs.dir buildDirectory.resolve("lib").toFile()
+    } else {
+        workingDir buildDirectory.resolve("lib").toString()
+        executable 'ar'
+        args = ['-M']
+        def inputFiles = ["libamdd", "libbtfd", "libcamdd", "libccolamdd", "libceres-debug", "libcholmodd", "libcolamdd", "libcxsparsed", "libgflags_debug", "libGKlib", "libglog", "libklud", "liblapack", "libldld", "libmetis", "libopenblas", "libspqrd", "libsuitesparseconfigd", "libumfpackd"]
+
+        def inputString = "create libceres-debug${project.libVersion}.a\n"
+        inputFiles.each {
+            def inFile = 'addlib ' + it + ".a\n"
+            inputString += inFile
+        }
+
+        inputString += "save\nend\n"
+        standardInput = new ByteArrayInputStream(inputString.getBytes())
+    }
+}
+
 task cppLibsZipStatic(type: Zip) {
+    dependsOn mergeStaticLibs
     destinationDirectory = outputsFolder
     archiveClassifier = outputClassifierStatic
     archiveBaseName = zipBaseName
     duplicatesStrategy = 'exclude'
-
-
-def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
-
-if (project.platformPath.startsWith('windows')) {
-    workingDir buildDirectory.resolve("lib").toString()
-    executable 'lib'
-    def inputFiles = ["libamd${project.libVersion}", "libbtf${project.libVersion}", "libcamd${project.libVersion}", "libccolamd${project.libVersion}", "libceres${project.libVersion}", "libcholmod${project.libVersion}", "libcxsparse${project.libVersion}", "libgflags${project.libVersion}", "libGKlib${project.libVersion}", "libglog${project.libVersion}", "libklu${project.libVersion}", "liblapack${project.libVersion}", "libldl${project.libVersion}", "libmetis${project.libVersion}", "libopenblas${project.libVersion}", "libspqr${project.libVersion}", "libsuitesparseconfig${project.libVersion}", "libumfpack${project.libVersion}"]
-    def setArgs = ["/OUT:opencv${project.libVersion}.lib"]
-    inputFiles.each {
-        def inFile = it + ".lib"
-        setArgs << inFile
-    }
-    args = setArgs
-} else if (project.platformPath.startsWith('osx')) {
-    executable 'libtool'
-    workingDir buildDirectory.resolve("lib").toString()
-    def libDirectory = buildDirectory.toFile()
-    args '-static'
-    args '-o'
-    args "libceres${project.libVersion}.a"
-    doFirst {
-        libDirectory.eachFile() {
-            if (!it.name.endsWith('.a') || it.name == "libceres${project.libVersion}.a".toString()) {
-                return
-            }
-            args it.absolutePath
-        }
-    }
-    inputs.dir buildDirectory.resolve("lib").toFile()
-} else {
-    workingDir buildDirectory.resolve("lib").toString()
-    executable 'ar'
-    args = ['-M']
-    def inputFiles = ["libamd", "libbtf", "libcamd", "libccolamd", "libceres", "libcholmod", "libcxsparse", "libgflags", "libGKlib", "libglog", "libklu", "liblapack", "libldl", "libmetis", "libopenblas", "libspqr", "libsuitesparseconfig", "libumfpack"]
-
-    def inputString = "create libceres${project.libVersion}.a\n"
-    inputFiles.each {
-        def inFile = 'addlib ' + it + ".a\n"
-        inputString += inFile
-    }
-
-    inputString += "save\nend\n"
-    standardInput = new ByteArrayInputStream(inputString.getBytes())
-}
-
-
 
     from(licenseFile) {
         into '/'
@@ -184,6 +230,7 @@ if (project.platformPath.startsWith('windows')) {
 }
 
 task cppLibsZipStaticDebug(type: Zip) {
+    dependsOn mergeDebugStaticLibs
     destinationDirectory = outputsFolder
     archiveClassifier = outputClassifierStatic + 'debug'
     archiveBaseName = zipBaseName
