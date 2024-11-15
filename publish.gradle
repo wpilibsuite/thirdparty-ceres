@@ -101,13 +101,13 @@ task outputVersions() {
 }
 
 task listLibsInDirectory {
-    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
+    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
     doLast {
         def libDirectory = buildDirectory.resolve("lib").toFile()
 
         // Print out all .a files in the directory
         def libFiles = libDirectory.listFiles().findAll { file ->
-            file.name.endsWith('.a')
+            file.name.endsWith('.lib')
         }
 
         if (libFiles.isEmpty()) {
@@ -187,7 +187,6 @@ task mergeStaticLibs(type: Exec) {
 }
 
 task mergeDebugStaticLibs(type: Exec) {
-    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
 
     if (project.platformPath.startsWith('windows')) {
@@ -203,19 +202,19 @@ task mergeDebugStaticLibs(type: Exec) {
     } else if (project.platformPath.startsWith('osx')) {
         executable 'libtool'
         workingDir buildDirectory.resolve("lib").toString()
-        def libDirectory = buildDirectory.toFile()
-        args '-static'
-        args '-o'
-        args "libceres-debug${project.libVersion}.a"
-        doFirst {
-            libDirectory.eachFile() {
-                if (!it.name.endsWith('.a')) {
-                    return
-                }
-                args it.absolutePath
-            }
+        
+        def outputLibName = "libceres${project.libVersion}.a"
+
+        def inputFiles = ["libsuitesparseconfigd.a", "libspqrd.a", "libamdd.a", "libcxsparsed.a", "libldld.a", "libglog.a", "libgflags_debug.a", "libcolamdd.a", "libmetis.a", "libccolamdd.a", "libcamdd.a", "libumfpackd.a", "libklud.a", "libcholmodd.a", "libceres-debug.a", "libbtfd.a", "libGKlib.a"]
+        
+        args '-static', '-o', outputLibName
+
+        inputFiles.each {
+            args "${buildDirectory.resolve("lib")}/$it"
         }
-        inputs.dir buildDirectory.resolve("lib").toFile()
+
+        inputs.files inputFiles.collect { buildDirectory.resolve("lib").resolve(it) }
+        outputs.file buildDirectory.resolve("lib/${outputLibName}")
     } else {
         workingDir buildDirectory.resolve("lib").toString()
         executable 'ar'
