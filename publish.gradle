@@ -133,19 +133,24 @@ task mergeStaticLibs(type: Exec) {
     } else if (project.platformPath.startsWith('osx')) {
         executable 'libtool'
         workingDir buildDirectory.resolve("lib").toString()
-        def libDirectory = buildDirectory.toFile()
-        args '-static'
-        args '-o'
-        args "libceres${project.libVersion}.a"
-        doFirst {
-            libDirectory.eachFile() {
-                if (!it.name.endsWith('.a') || it.name == "libceres${project.libVersion}.a".toString()) {
-                    return
-                }
-                args it.absolutePath
-            }
+        
+        def outputLibName = "libceres-debug${project.libVersion}.a"
+
+        def inputFiles = [
+            "libamd.a", "libbtf.a", "libcamd.a", "libccolamd.a", "libceres.a",
+            "libcholmod.a", "libcxsparse.a", "libgflags.a", "libGKlib.a", "libglog.a",
+            "libklu.a", "liblapack.a", "libldl.a", "libmetis.a", "libopenblas.a",
+            "libspqr.a", "libsuitesparseconfig.a", "libumfpack.a"
+        ]
+        
+        args '-static', '-o', outputLibName
+
+        inputFiles.each {
+            args "${buildDirectory.resolve("lib")}/$it"
         }
-        inputs.dir buildDirectory.resolve("lib").toFile()
+
+        inputs.files inputFiles.collect { buildDirectory.resolve("lib").resolve(it) }
+        outputs.file buildDirectory.resolve("lib/${outputLibName}")
     } else {
         workingDir buildDirectory.resolve("lib").toString()
         executable 'ar'
@@ -172,7 +177,7 @@ task mergeDebugStaticLibs(type: Exec) {
         def inputFiles = ["libamd${project.libVersion}", "libbtf${project.libVersion}", "libcamd${project.libVersion}", "libccolamd${project.libVersion}", "libceres${project.libVersion}", "libcholmod${project.libVersion}", "libcxsparse${project.libVersion}", "libgflags${project.libVersion}", "libGKlib${project.libVersion}", "libglog${project.libVersion}", "libklu${project.libVersion}", "liblapack${project.libVersion}", "libldl${project.libVersion}", "libmetis${project.libVersion}", "libopenblas${project.libVersion}", "libspqr${project.libVersion}", "libsuitesparseconfig${project.libVersion}", "libumfpack${project.libVersion}"]
         def setArgs = ["/OUT:opencv${project.libVersion}.lib"]
         inputFiles.each {
-            def inFile = it + ".lib"
+            def inFile = it + "-debug" + ".lib"
             setArgs << inFile
         }
         args = setArgs
@@ -182,10 +187,10 @@ task mergeDebugStaticLibs(type: Exec) {
         def libDirectory = buildDirectory.toFile()
         args '-static'
         args '-o'
-        args "libceres${project.libVersion}.a"
+        args "libceres-debug${project.libVersion}.a"
         doFirst {
             libDirectory.eachFile() {
-                if (!it.name.endsWith('.a') || it.name == "libceres${project.libVersion}.a".toString()) {
+                if (!it.name.endsWith('.a')) {
                     return
                 }
                 args it.absolutePath
