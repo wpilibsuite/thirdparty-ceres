@@ -157,14 +157,9 @@ task mergeStaticLibs(type: Exec) {
         executable 'libtool'
         workingDir buildDirectory.resolve("lib").toString()
         
-        def outputLibName = "libceres-debug${project.libVersion}.a"
+        def outputLibName = "libceres${project.libVersion}.a"
 
-        def inputFiles = [
-            "libamd.a", "libbtf.a", "libcamd.a", "libccolamd.a", "libceres.a",
-            "libcholmod.a", "libcxsparse.a", "libgflags.a", "libGKlib.a", "libglog.a",
-            "libklu.a", "liblapack.a", "libldl.a", "libmetis.a", "libopenblas.a",
-            "libspqr.a", "libsuitesparseconfig.a", "libumfpack.a"
-        ]
+        def inputFiles = ["libspqr.a", "libldl.a", "libceres.a", "libccolamd.a", "libklu.a", "libcxsparse.a", "libglog.a", "libsuitesparseconfig.a", "libbtf.a", "libmetis.a", "libumfpack.a", "libcholmod.a", "libcamd.a", "libgflags.a", "libamd.a", "libGKlib.a", "libcolamd.a"]
         
         args '-static', '-o', outputLibName
 
@@ -192,6 +187,7 @@ task mergeStaticLibs(type: Exec) {
 }
 
 task mergeDebugStaticLibs(type: Exec) {
+    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
 
     if (project.platformPath.startsWith('windows')) {
