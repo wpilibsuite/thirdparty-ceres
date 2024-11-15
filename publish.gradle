@@ -101,13 +101,13 @@ task outputVersions() {
 }
 
 task listLibsInDirectory {
-    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
+    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
     doLast {
         def libDirectory = buildDirectory.resolve("lib").toFile()
 
         // Print out all .a files in the directory
         def libFiles = libDirectory.listFiles().findAll { file ->
-            file.name.endsWith('.a') // Filter for .a files
+            file.name.endsWith('.a')
         }
 
         if (libFiles.isEmpty()) {
