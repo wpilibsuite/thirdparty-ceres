@@ -149,8 +149,7 @@ task mergeStaticLibs(type: Exec) {
         def inputFiles = ["ceres.lib", "gflags.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamd.lib", "libbtf.lib", "libcamd.lib", "libccolamd.lib", "libcholmod.lib", "libcolamd.lib", "libcxsparse.lib", "libf2c.lib", "libklu.lib", "libldl.lib", "libspqr.lib", "libumfpack.lib", "metis.lib", "openblas.lib", "suitesparseconfig.lib"]
         def setArgs = ["/OUT:opencv${project.libVersion}.lib"]
         inputFiles.each {
-            def inFile = it + ".lib"
-            setArgs << inFile
+            setArgs << it
         }
         args = setArgs
     } else if (project.platformPath.startsWith('osx')) {
