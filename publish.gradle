@@ -140,7 +140,6 @@ task cppHeadersZip(type: Zip) {
 }
 
 task mergeStaticLibs(type: Exec) {
-    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
 
     if (project.platformPath.startsWith('windows')) {
@@ -186,24 +185,22 @@ task mergeStaticLibs(type: Exec) {
 }
 
 task mergeDebugStaticLibs(type: Exec) {
-    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
 
     if (project.platformPath.startsWith('windows')) {
         workingDir buildDirectory.resolve("lib").toString()
         executable 'lib'
-        def inputFiles = ["libamd${project.libVersion}", "libbtf${project.libVersion}", "libcamd${project.libVersion}", "libccolamd${project.libVersion}", "libceres${project.libVersion}", "libcholmod${project.libVersion}", "libcxsparse${project.libVersion}", "libgflags${project.libVersion}", "libGKlib${project.libVersion}", "libglog${project.libVersion}", "libklu${project.libVersion}", "liblapack${project.libVersion}", "libldl${project.libVersion}", "libmetis${project.libVersion}", "libopenblas${project.libVersion}", "libspqr${project.libVersion}", "libsuitesparseconfig${project.libVersion}", "libumfpack${project.libVersion}"]
-        def setArgs = ["/OUT:opencv${project.libVersion}.lib"]
+        def inputFiles = ["ceres-debug.lib", "gflags_debug.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamdd.lib", "libbtfd.lib", "libcamdd.lib", "libccolamdd.lib", "libcholmodd.lib", "libcolamdd.lib", "libcxsparsed.lib", "libklud.lib", "libldld.lib", "libspqrd.lib", "libumfpackd.lib", "metis.lib", "openblas.lib", "suitesparseconfigd.lib"]
+        def setArgs = ["/OUT:ceres-debug${project.libVersion}.lib"]
         inputFiles.each {
-            def inFile = it + "-debug" + ".lib"
-            setArgs << inFile
+            setArgs << it
         }
         args = setArgs
     } else if (project.platformPath.startsWith('osx')) {
         executable 'libtool'
         workingDir buildDirectory.resolve("lib").toString()
         
-        def outputLibName = "libceres${project.libVersion}.a"
+        def outputLibName = "libceres-debug${project.libVersion}.a"
 
         def inputFiles = ["libsuitesparseconfigd.a", "libspqrd.a", "libamdd.a", "libcxsparsed.a", "libldld.a", "libglog.a", "libgflags_debug.a", "libcolamdd.a", "libmetis.a", "libccolamdd.a", "libcamdd.a", "libumfpackd.a", "libklud.a", "libcholmodd.a", "libceres-debug.a", "libbtfd.a", "libGKlib.a"]
         
@@ -246,8 +243,8 @@ task cppLibsZipStatic(type: Zip) {
     from(resolvedDir.toFile()) {
         into project.platformPath + '/static'
         exclude '**/pkgconfig'
-        include '**/*.a'
-        include '**/*.lib'
+        include "**/libceres${project.libversion}.a"
+        include "**/ceres${project.libversion}.lib"
         include '**/*.pdb'
     }
 }
@@ -266,8 +263,8 @@ task cppLibsZipStaticDebug(type: Zip) {
     from(resolvedDir.toFile()) {
         into project.platformPath + '/static'
         exclude '**/pkgconfig'
-        include '**/*.a'
-        include '**/*.lib'
+        include "**/libceres-debug${project.libversion}.a"
+        include "**/ceres-debug${project.libversion}.lib"
         include '**/*.pdb'
     }
 }
