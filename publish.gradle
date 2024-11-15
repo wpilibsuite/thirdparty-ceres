@@ -140,6 +140,7 @@ task cppHeadersZip(type: Zip) {
 }
 
 task mergeStaticLibs(type: Exec) {
+    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
 
     if (project.platformPath.startsWith('windows')) {
