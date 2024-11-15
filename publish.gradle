@@ -27,7 +27,7 @@ ext.libVersion = "${ext.version.replace(".", "")}"
 def getTriplet() {
     def fileNameFinder = new FileNameFinder()
     for (File folder : file("$projectDir/vcpkg_installed").listFiles()) {
-        if (folder.name == "x64-linux") {
+        if (folder.name == project.platform) {
             println folder.name
             return folder.name
         } 
