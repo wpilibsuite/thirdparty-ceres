@@ -101,6 +101,7 @@ task outputVersions() {
 }
 
 task listLibsInDirectory {
+    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
     doLast {
         def libDirectory = buildDirectory.resolve("lib").toFile()
 
