@@ -100,6 +100,27 @@ task outputVersions() {
     }
 }
 
+task listLibsInDirectory {
+    doLast {
+        def libDirectory = buildDirectory.resolve("lib").toFile()
+
+        // Print out all .a files in the directory
+        def libFiles = libDirectory.listFiles().findAll { file ->
+            file.name.endsWith('.a') // Filter for .a files
+        }
+
+        if (libFiles.isEmpty()) {
+            println "No .a files found in ${libDirectory}"
+        } else {
+            println "Found the following .a files in ${libDirectory}:"
+            libFiles.each { file ->
+                println " - ${file.name}"
+            }
+        }
+    }
+}
+
+
 task cppHeadersZip(type: Zip) {
     dependsOn outputVersions
     destinationDirectory = outputsFolder
@@ -118,6 +139,7 @@ task cppHeadersZip(type: Zip) {
 }
 
 task mergeStaticLibs(type: Exec) {
+    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
 
     if (project.platformPath.startsWith('windows')) {
