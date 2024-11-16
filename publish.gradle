@@ -243,8 +243,8 @@ task cppLibsZipStatic(type: Zip) {
     from(resolvedDir.toFile()) {
         into project.platformPath + '/static'
         exclude '**/pkgconfig'
-        include "**/libceres${project.libversion}.a"
-        include "**/ceres${project.libversion}.lib"
+        include "**/*.a"
+        include "**/*.lib"
         include '**/*.pdb'
     }
 }
@@ -263,8 +263,8 @@ task cppLibsZipStaticDebug(type: Zip) {
     from(resolvedDir.toFile()) {
         into project.platformPath + '/static'
         exclude '**/pkgconfig'
-        include "**/libceres-debug${project.libversion}.a"
-        include "**/ceres-debug${project.libversion}.lib"
+        include "**/*.a"
+        include "**/*.lib"
         include '**/*.pdb'
     }
 }
