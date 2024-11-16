@@ -27,7 +27,7 @@ ext.libVersion = "${ext.version.replace(".", "")}"
 def getTriplet() {
     def fileNameFinder = new FileNameFinder()
     for (File folder : file("$projectDir/vcpkg_installed").listFiles()) {
-        if (folder.name == "x64-linux") {
+        if (folder.name == project.platform) {
             println folder.name
             return folder.name
         } 
@@ -99,28 +99,6 @@ task outputVersions() {
         versionFile.write pubVersion
     }
 }
-
-task listLibsInDirectory {
-    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
-    doLast {
-        def libDirectory = buildDirectory.resolve("lib").toFile()
-
-        // Print out all .a files in the directory
-        def libFiles = libDirectory.listFiles().findAll { file ->
-            file.name.endsWith('.lib')
-        }
-
-        if (libFiles.isEmpty()) {
-            println "No .a files found in ${libDirectory}"
-        } else {
-            println "Found the following .a files in ${libDirectory}:"
-            libFiles.each { file ->
-                println " - ${file.name}"
-            }
-        }
-    }
-}
-
 
 task cppHeadersZip(type: Zip) {
     dependsOn outputVersions
