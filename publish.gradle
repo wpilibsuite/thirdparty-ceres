@@ -189,13 +189,17 @@ task mergeStaticLibs(type: Exec) {
 }
 
 task mergeDebugStaticLibs(type: Exec) {
-    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
 
     if (project.platformPath.startsWith('windows')) {
         workingDir buildDirectory.resolve("lib").toString()
         executable 'lib'
         def inputFiles = ["ceres-debug.lib", "gflags_debug.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamdd.lib", "libbtfd.lib", "libcamdd.lib", "libccolamdd.lib", "libcholmodd.lib", "libcolamdd.lib", "libcxsparsed.lib", "libklud.lib", "libldld.lib", "libspqrd.lib", "libumfpackd.lib", "metis.lib", "openblas.lib", "suitesparseconfigd.lib"]
+        if (project.platformPath.contains('arm64')) {
+            print("ARM64 Architecture Detected")
+            inputFiles = ["ceres-debug.lib", "gflags_debug.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamdd.lib", "libbtfd.lib", "libcamdd.lib", "libccolamdd.lib", "libcholmodd.lib", "libcolamdd.lib", "libcxsparsed.lib", "libf2c.lib", "libklud.lib", "libldld.lib", "libspqrd.lib", "libumfpackd.lib", "metis.lib", "openblas.lib", "suitesparseconfigd.lib"]
+        }
+        
         def setArgs = ["/OUT:ceres-debug${project.libVersion}.lib"]
         inputFiles.each {
             setArgs << it
