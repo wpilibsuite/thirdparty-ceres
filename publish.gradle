@@ -27,7 +27,7 @@ ext.libVersion = "${ext.version.replace(".", "")}"
 def getTriplet() {
     def fileNameFinder = new FileNameFinder()
     for (File folder : file("$projectDir/vcpkg_installed").listFiles()) {
-        if (folder.name == project.platform) {
+        if (folder.name == "x64-linux") {
             println folder.name
             return folder.name
         } 
@@ -252,8 +252,8 @@ task cppLibsZipStatic(type: Zip) {
     from(resolvedDir.toFile()) {
         into project.platformPath + '/static'
         exclude '**/pkgconfig'
-        include "**/*.a"
-        include "**/*.lib"
+        include "**/libceres${project.libVersion}.a"
+        include "**/ceres${project.libVersion}.lib"
         include '**/*.pdb'
     }
 }
@@ -272,8 +272,8 @@ task cppLibsZipStaticDebug(type: Zip) {
     from(resolvedDir.toFile()) {
         into project.platformPath + '/static'
         exclude '**/pkgconfig'
-        include "**/*.a"
-        include "**/*.lib"
+        include "**/libceres-debug${project.libVersion}.a"
+        include "**/ceres-debug${project.libVersion}.lib"
         include '**/*.pdb'
     }
 }
