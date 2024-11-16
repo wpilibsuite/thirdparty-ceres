@@ -101,7 +101,7 @@ task outputVersions() {
 }
 
 task listLibsInDirectory {
-    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
+    def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
     doLast {
         def libDirectory = buildDirectory.resolve("lib").toFile()
 
@@ -140,13 +140,16 @@ task cppHeadersZip(type: Zip) {
 }
 
 task mergeStaticLibs(type: Exec) {
-    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet)
 
     if (project.platformPath.startsWith('windows')) {
         workingDir buildDirectory.resolve("lib").toString()
         executable 'lib'
-        def inputFiles = ["ceres.lib", "libf2c.lib", "gflags.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamd.lib", "libbtf.lib", "libcamd.lib", "libccolamd.lib", "libcholmod.lib", "libcolamd.lib", "libcxsparse.lib", "libklu.lib", "libldl.lib", "libspqr.lib", "libumfpack.lib", "metis.lib", "openblas.lib", "suitesparseconfig.lib"]
+        def inputFiles = ["ceres.lib", "gflags.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamd.lib", "libbtf.lib", "libcamd.lib", "libccolamd.lib", "libcholmod.lib", "libcolamd.lib", "libcxsparse.lib", "libklu.lib", "libldl.lib", "libspqr.lib", "libumfpack.lib", "metis.lib", "openblas.lib", "suitesparseconfig.lib"]
+        if (project.platformPath.contains('arm64')) {
+            print("ARM64 Architecture Detected")
+            inputFiles = ["ceres.lib", "gflags.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamd.lib", "libbtf.lib", "libcamd.lib", "libccolamd.lib", "libcholmod.lib", "libcolamd.lib", "libcxsparse.lib", "libklu.lib", "libldl.lib", "libspqr.lib", "libumfpack.lib", "metis.lib", "openblas.lib", "suitesparseconfig.lib", "libf2c.lib"]
+        }
         def setArgs = ["/OUT:ceres${project.libVersion}.lib"]
         inputFiles.each {
             setArgs << it
@@ -186,6 +189,7 @@ task mergeStaticLibs(type: Exec) {
 }
 
 task mergeDebugStaticLibs(type: Exec) {
+    dependsOn listLibsInDirectory
     def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("vcpkg_installed").resolve(triplet).resolve("debug")
 
     if (project.platformPath.startsWith('windows')) {
