@@ -175,7 +175,7 @@ task mergeDebugStaticLibs(type: Exec) {
         def inputFiles = ["ceres-debug.lib", "gflags_debug.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamdd.lib", "libbtfd.lib", "libcamdd.lib", "libccolamdd.lib", "libcholmodd.lib", "libcolamdd.lib", "libcxsparsed.lib", "libklud.lib", "libldld.lib", "libspqrd.lib", "libumfpackd.lib", "metis.lib", "openblas.lib", "suitesparseconfigd.lib"]
         if (project.platformPath.contains('arm64')) {
             print("ARM64 Architecture Detected")
-            inputFiles = ["ceres-debug.lib", "gflags_debug.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamdd.lib", "libbtfd.lib", "libcamdd.lib", "libccolamdd.lib", "libcholmodd.lib", "libcolamdd.lib", "libcxsparsed.lib", "libf2c.lib", "libklud.lib", "libldld.lib", "libspqrd.lib", "libumfpackd.lib", "metis.lib", "openblas.lib", "suitesparseconfigd.lib"]
+            inputFiles = inputFiles + "libf2c.lib"
         }
         
         def setArgs = ["/OUT:ceres-debug${project.libVersion}.lib"]
