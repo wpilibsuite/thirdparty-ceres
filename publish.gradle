@@ -126,7 +126,7 @@ task mergeStaticLibs(type: Exec) {
         def inputFiles = ["ceres.lib", "gflags.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamd.lib", "libbtf.lib", "libcamd.lib", "libccolamd.lib", "libcholmod.lib", "libcolamd.lib", "libcxsparse.lib", "libklu.lib", "libldl.lib", "libspqr.lib", "libumfpack.lib", "metis.lib", "openblas.lib", "suitesparseconfig.lib"]
         if (project.platformPath.contains('arm64')) {
             print("ARM64 Architecture Detected")
-            inputFiles = ["ceres.lib", "gflags.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamd.lib", "libbtf.lib", "libcamd.lib", "libccolamd.lib", "libcholmod.lib", "libcolamd.lib", "libcxsparse.lib", "libklu.lib", "libldl.lib", "libspqr.lib", "libumfpack.lib", "metis.lib", "openblas.lib", "suitesparseconfig.lib", "libf2c.lib"]
+            inputFiles = inputFiles + "libf2c.lib"
         }
         def setArgs = ["/OUT:ceres${project.libVersion}.lib"]
         inputFiles.each {
