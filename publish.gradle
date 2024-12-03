@@ -123,14 +123,10 @@ task mergeStaticLibs(type: Exec) {
     if (project.platformPath.startsWith('windows')) {
         workingDir buildDirectory.resolve("lib").toString()
         executable 'lib'
-        def inputFiles = ["ceres.lib", "gflags.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamd.lib", "libbtf.lib", "libcamd.lib", "libccolamd.lib", "libcholmod.lib", "libcolamd.lib", "libcxsparse.lib", "libklu.lib", "libldl.lib", "libspqr.lib", "libumfpack.lib", "metis.lib", "openblas.lib", "suitesparseconfig.lib"]
-        if (project.platformPath.contains('arm64')) {
-            print("ARM64 Architecture Detected")
-            inputFiles = inputFiles + "libf2c.lib"
-        }
+        def inputFiles = ["ceres", "gflags_static", "GKlib", "glog", "lapack", "libamd", "libbtf", "libcamd", "libccolamd", "libcholmod", "libcolamd", "libcxsparse", "libklu", "libldl", "libspqr", "libumfpack", "metis", "openblas", "suitesparseconfig", "libf2c"]
         def setArgs = ["/OUT:ceres${project.libVersion}.lib"]
         inputFiles.each {
-            setArgs << it
+            setArgs << it + ".lib"
         }
         args = setArgs
     } else if (project.platformPath.startsWith('osx')) {
@@ -139,12 +135,12 @@ task mergeStaticLibs(type: Exec) {
         
         def outputLibName = "libceres${project.libVersion}.a"
 
-        def inputFiles = ["libspqr.a", "libldl.a", "libceres.a", "libccolamd.a", "libklu.a", "libcxsparse.a", "libglog.a", "libsuitesparseconfig.a", "libbtf.a", "libmetis.a", "libumfpack.a", "libcholmod.a", "libcamd.a", "libgflags.a", "libamd.a", "libGKlib.a", "libcolamd.a"]
+        def inputFiles = ["libspqr", "libldl", "libceres", "libccolamd", "libklu", "libcxsparse", "libglog", "libsuitesparseconfig", "libbtf", "libmetis", "libumfpack", "libcholmod", "libcamd", "libgflags", "libamd", "libGKlib", "libcolamd"]
         
         args '-static', '-o', outputLibName
 
         inputFiles.each {
-            args "${buildDirectory.resolve("lib")}/$it"
+            args "${buildDirectory.resolve("lib")}/$it" + ".a"
         }
 
         inputs.files inputFiles.collect { buildDirectory.resolve("lib").resolve(it) }
@@ -155,7 +151,7 @@ task mergeStaticLibs(type: Exec) {
         args = ['-M']
         def inputFiles = ["libamd", "libbtf", "libcamd", "libccolamd", "libceres", "libcholmod", "libcxsparse", "libgflags", "libGKlib", "libglog", "libklu", "liblapack", "libldl", "libmetis", "libopenblas", "libspqr", "libsuitesparseconfig", "libumfpack"]
 
-        def inputString = "create libceres${project.libVersion}.a\n"
+        def inputString = "create libceres${project.libVersion}\n"
         inputFiles.each {
             def inFile = 'addlib ' + it + ".a\n"
             inputString += inFile
@@ -172,15 +168,10 @@ task mergeDebugStaticLibs(type: Exec) {
     if (project.platformPath.startsWith('windows')) {
         workingDir buildDirectory.resolve("lib").toString()
         executable 'lib'
-        def inputFiles = ["ceres-debug.lib", "gflags_debug.lib", "GKlib.lib", "glog.lib", "lapack.lib", "libamdd.lib", "libbtfd.lib", "libcamdd.lib", "libccolamdd.lib", "libcholmodd.lib", "libcolamdd.lib", "libcxsparsed.lib", "libklud.lib", "libldld.lib", "libspqrd.lib", "libumfpackd.lib", "metis.lib", "openblas.lib", "suitesparseconfigd.lib"]
-        if (project.platformPath.contains('arm64')) {
-            print("ARM64 Architecture Detected")
-            inputFiles = inputFiles + "libf2c.lib"
-        }
-        
+        def inputFiles = ["ceres-debug", "gflags_static_debug", "GKlib", "glog", "lapack", "libamdd", "libbtfd", "libcamdd", "libccolamdd", "libcholmodd", "libcolamdd", "libcxsparsed", "libklud", "libldld", "libspqrd", "libumfpackd", "metis", "openblas", "suitesparseconfigd", "libf2c"]
         def setArgs = ["/OUT:ceres-debug${project.libVersion}.lib"]
         inputFiles.each {
-            setArgs << it
+            setArgs << it + ".lib"
         }
         args = setArgs
     } else if (project.platformPath.startsWith('osx')) {
@@ -189,12 +180,12 @@ task mergeDebugStaticLibs(type: Exec) {
         
         def outputLibName = "libceres-debug${project.libVersion}.a"
 
-        def inputFiles = ["libsuitesparseconfigd.a", "libspqrd.a", "libamdd.a", "libcxsparsed.a", "libldld.a", "libglog.a", "libgflags_debug.a", "libcolamdd.a", "libmetis.a", "libccolamdd.a", "libcamdd.a", "libumfpackd.a", "libklud.a", "libcholmodd.a", "libceres-debug.a", "libbtfd.a", "libGKlib.a"]
+        def inputFiles = ["libsuitesparseconfigd", "libspqrd", "libamdd", "libcxsparsed", "libldld", "libglog", "libgflags_debug", "libcolamdd", "libmetis", "libccolamdd", "libcamdd", "libumfpackd", "libklud", "libcholmodd", "libceres-debug", "libbtfd", "libGKlib"]
         
         args '-static', '-o', outputLibName
 
         inputFiles.each {
-            args "${buildDirectory.resolve("lib")}/$it"
+            args "${buildDirectory.resolve("lib")}/$it" + ".a"
         }
 
         inputs.files inputFiles.collect { buildDirectory.resolve("lib").resolve(it) }
