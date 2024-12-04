@@ -149,9 +149,9 @@ task mergeStaticLibs(type: Exec) {
         workingDir buildDirectory.resolve("lib").toString()
         executable 'ar'
         args = ['-M']
-        def inputFiles = ["libamd", "libbtf", "libcamd", "libccolamd", "libceres", "libcholmod", "libcxsparse", "libgflags", "libGKlib", "libglog", "libklu", "liblapack", "libldl", "libmetis", "libopenblas", "libspqr", "libsuitesparseconfig", "libumfpack"]
+        def inputFiles = ["libamd", "libbtf", "libcamd", "libccolamd", "libceres", "libcholmod", "libcolamd","libcxsparse", "libgflags", "libGKlib", "libglog", "libklu", "liblapack", "libldl", "libmetis", "libopenblas", "libspqr", "libsuitesparseconfig", "libumfpack"]
 
-        def inputString = "create libceres${project.libVersion}\n"
+        def inputString = "create libceres${project.libVersion}.a\n"
         inputFiles.each {
             def inFile = 'addlib ' + it + ".a\n"
             inputString += inFile
