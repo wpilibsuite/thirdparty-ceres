@@ -1,5 +1,311 @@
-if (project.hasProperty('runmerge')) {
-    apply from: 'merge.gradle'
+import org.gradle.internal.os.OperatingSystem
+
+import java.nio.file.Files
+import java.nio.file.Paths
+
+apply plugin: 'maven-publish'
+
+
+ext.version = "2.2"
+ext.libVersion = "${ext.version.replace(".", "")}"
+
+def getPlatform() {
+    def platform
+    def os_name = System.getProperty("os.name")
+    def os_arch = System.getProperty("os.arch")
+
+    if (os_arch == 'amd64') {
+        os_arch = 'x86_64'
+    } else if (os_arch == 'aarch64' || os_arch == 'arm64') {
+        os_arch = 'arm64'
+    }
+
+    if (OperatingSystem.current().isWindows()) {
+        platform = "windows-${os_arch}"
+    } else if (OperatingSystem.current().isLinux()) {
+        platform = "linux-${os_arch}"
+    } else if (OperatingSystem.current().isMacOsX()) {
+        platform = "osx-universal"
+    } else {
+        platform = "${os_name}-${os_arch}"
+    }
+    return platform
+}
+
+def getPlatformPath(platform) {
+    if (platform == "linux-athena") {
+        return "linux/athena"
+    } else if (platform == "linux-arm32") {
+        return "linux/arm32"
+    } else if (platform == "linux-arm64") {
+        return "linux/arm64"
+    } else if (platform == "linux-x86_64") {
+        return "linux/x86-64"
+    } else if (platform == "osx-universal") {
+        return "osx/universal"
+    } else if (platform == "windows-x86_64") {
+        return "windows/x86-64"
+    } else if (platform == "windows-arm64") {
+        return "windows/arm64"
+    } else {
+        return ""
+    }
+}
+
+def platform
+if (!project.hasProperty('platform')) {
+    println "No 'platform' property specified; using the build system's platform"
+    platform = getPlatform()
 } else {
-    apply from: 'publish.gradle'
+    platform = project.platform
+}
+
+ext.platformPath = getPlatformPath(platform)
+ext.platformClassifier = ext.platformPath.replaceFirst('/', '')
+
+
+// Determine what repo to publish to. Default is development. Valid options are development and release
+if (!project.hasProperty('repo')) {
+    ext.repo = 'development'
+}
+def pubVersion = "$ext.version-1"
+
+def outputsFolder = file("$project.buildDir/outputs")
+
+def baseArtifactId = 'ceres'
+def artifactGroupId = 'edu.wpi.first.thirdparty.frc2025.ceres'
+def zipBaseName = '_GROUP_edu_wpi_first_thirdparty_frc2025_ceres_ID_ceres-cpp_CLS'
+
+def versionFile = file("$outputsFolder/version.txt")
+def licenseFiles = files("LICENSE.md", "AMD_LICENSE", "CAMD_LICENSE", "CCOLAMD_LICENSE", "CERES_LICENSE", "CHOLMOD_LICENSE", "COLAMD_LICENSE", "EIGEN_LICENSE", "OPENBLAS_LICENSE",)
+
+def outputClassifierStatic = project.ext.platformClassifier + 'static'
+println platformPath
+
+task copyAllOutputs(type: Copy) {
+    destinationDir = outputsFolder
+}
+
+ext.addTaskToCopyAllOutputs = { task ->
+    copyAllOutputs.dependsOn task
+    copyAllOutputs.inputs.file task.archiveFile
+    copyAllOutputs.from task.archiveFile
+}
+
+['Debug', 'RelWithDebInfo'].each { buildtype ->
+    task "configure$buildtype" (type: Exec) {
+        def baseArgs = ["-B", "build$buildtype", "-DCMAKE_BUILD_TYPE=$buildtype", "-G", "Ninja"]
+        if (platform == "windows-arm64") {
+            // Need to set CMAKE_CROSSCOMPILING because getarch can't be crosscompiled and executed on the host.
+            // Also, TARGET must be generic. You need to set it if crosscompiling, but setting it to ARMV8, it will try to use assembly, which fails on Windows
+            baseArgs += ["-DCMAKE_CROSSCOMPILING=1", "-DCMAKE_SYSTEM_NAME=Windows", "-DCMAKE_SYSTEM_PROCESSOR=ARM64", "-DTARGET=GENERIC", "-DARCH=ARM64"]
+        }
+        outputs.dir "build$buildtype"
+        executable "cmake"
+        args baseArgs
+    }
+    task "build$buildtype" (type: Exec) {
+        dependsOn "configure$buildtype"
+        def baseArgs = ["--build", "build$buildtype"]
+        outputs.dir "build$buildtype"
+        executable "cmake"
+        args baseArgs
+    }
+    task "install$buildtype" (type: Exec) {
+        dependsOn "build$buildtype"
+        def baseArgs = ["--install", "build$buildtype", '--prefix', "build$buildtype/install"]
+        outputs.dir "build$buildtype/install"
+        executable "cmake"
+        args baseArgs
+    }
+    task "merge${buildtype}StaticLibs"(type: Exec) {
+        dependsOn("install$buildtype")
+        def buildDirectory = Paths.get(projectDir.canonicalPath).resolve("build$buildtype").resolve("install")
+
+        if (project.platformPath.startsWith('windows')) {
+            workingDir buildDirectory.resolve("lib").toString()
+            executable 'lib'
+            def inputFiles
+            if (buildtype == "Debug") {
+                inputFiles = ['ceres-debug'] 
+            } else {
+                inputFiles = ['ceres'] 
+            }
+            inputFiles += ['amd_static', 'camd_static', 'ccolamd_static', 'colamd_static', 'cholmod_static', 'suitesparseconfig_static', "openblas"]
+            inputFiles.each {
+                args "${buildDirectory.resolve("lib")}/$it" + ".lib"
+            }
+            args "/OUT:ceres-$buildtype${project.libVersion}.lib"
+        } else if (project.platformPath.startsWith('osx')) {
+            executable 'libtool'
+            workingDir buildDirectory.resolve("lib").toString()
+
+            def outputLibName = "libceres-$buildtype${project.libVersion}.a"
+            def inputFiles
+            if (buildtype == "Debug") {
+                inputFiles = ['libceres-debug'] 
+            } else {
+                inputFiles = ['libceres'] 
+            }
+            inputFiles += ['libamd', 'libcamd', 'libccolamd', 'libcolamd', 'libcholmod', 'libsuitesparseconfig']
+            inputFiles.each {
+                args "${buildDirectory.resolve("lib")}/$it" + ".a"
+            }
+
+            args '-static', '-o', outputLibName
+
+            outputs.file buildDirectory.resolve("lib/${outputLibName}")
+        } else {
+            workingDir buildDirectory.resolve("lib").toString()
+            executable 'ar'
+            args = ['-M']
+
+            def inputString = "create libceres-$buildtype${project.libVersion}.a\n"
+            def inputFiles
+            if (buildtype == "Debug") {
+                inputFiles = ['libceres-debug'] 
+            } else {
+                inputFiles = ['libceres'] 
+            }
+            inputFiles += ['libamd', 'libcamd', 'libccolamd', 'libcolamd', 'libcholmod', 'libsuitesparseconfig', 'libopenblas']
+            inputFiles.each {
+                def inFile = 'addlib ' + it + ".a\n"
+                inputString += inFile
+            }
+            inputString += "save\nend\n"
+            standardInput = new ByteArrayInputStream(inputString.getBytes())
+        }
+    }
+}
+
+task outputVersions() {
+    description = 'Prints the versions of this to a file for use by the downstream packaging project'
+    group = 'Build'
+    outputs.files(versionFile)
+
+    doFirst {
+        buildDir.mkdir()
+        outputsFolder.mkdir()
+    }
+
+    doLast {
+        versionFile.write pubVersion
+    }
+}
+
+task cppHeadersZip(type: Zip) {
+    dependsOn outputVersions
+    destinationDirectory = outputsFolder
+    archiveBaseName = zipBaseName
+    archiveClassifier = "headers"
+
+    from(licenseFiles) {
+        into '/'
+    }
+
+    from("buildDebug/install/include/ceres") {
+        exclude "**/miniglog/**"
+        into '/ceres'
+    }
+    from("buildDebug/install/include/ceres/internal/miniglog") {
+        into '/'
+    }
+    from("buildDebug/install/include/openblas") {
+        into '/openblas'
+    }
+    from("buildDebug/install/include/suitesparse") {
+        into '/suitesparse'
+    }
+
+    includeEmptyDirs = false
+    // Just need to depend on any install task
+    dependsOn installDebug
+}
+
+task cppSourcesZip(type: Zip) {
+    // Just need to depend on any build task
+    dependsOn buildDebug
+    destinationDirectory = outputsFolder
+    archiveClassifier = 'sources'
+    archiveBaseName = zipBaseName
+    duplicatesStrategy = 'exclude'
+
+    from(licenseFiles) {
+        into '/'
+    }
+    from('buildDebug/_deps/') {
+        into '/'
+        include "*-src/**/*"
+    }
+    includeEmptyDirs = false
+}
+
+task cppLibsZipStatic(type: Zip) {
+    dependsOn mergeRelWithDebInfoStaticLibs
+    destinationDirectory = outputsFolder
+    archiveClassifier = outputClassifierStatic
+    archiveBaseName = zipBaseName
+    duplicatesStrategy = 'exclude'
+
+    from(licenseFiles) {
+        into '/'
+    }
+    from("buildRelWithDebInfo/install/lib") {
+        into project.platformPath + '/static'
+        include "**/libceres-RelWithDebInfo${project.libVersion}.a"
+        include "**/ceres-RelWithDebInfo${project.libVersion}.lib"
+        include '**/*.pdb'
+    }
+    includeEmptyDirs = false
+}
+
+task cppLibsZipStaticDebug(type: Zip) {
+    dependsOn mergeDebugStaticLibs
+    destinationDirectory = outputsFolder
+    archiveClassifier = outputClassifierStatic + 'debug'
+    archiveBaseName = zipBaseName
+    duplicatesStrategy = 'exclude'
+
+    from(licenseFiles) {
+        into '/'
+    }
+    from("buildDebug/install/lib") {
+        into project.platformPath + '/static'
+        include "**/libceres-Debug${project.libVersion}.a"
+        include "**/ceres-Debug${project.libVersion}.lib"
+        include '**/*.pdb'
+    }
+    includeEmptyDirs = false
+}
+
+addTaskToCopyAllOutputs(cppSourcesZip)
+addTaskToCopyAllOutputs(cppHeadersZip)
+if (!project.hasProperty('skipRelease')) {
+    addTaskToCopyAllOutputs(cppLibsZipStatic)
+}
+
+if (!project.hasProperty('skipDebug')) {
+    addTaskToCopyAllOutputs(cppLibsZipStaticDebug)
+}
+
+model {
+    publishing {
+        publications {
+            cpp(MavenPublication) {
+                artifact cppHeadersZip
+                artifact cppSourcesZip
+                artifact cppLibsZipStatic
+                artifact cppLibsZipStaticDebug
+
+                artifactId = "${baseArtifactId}-cpp"
+                groupId artifactGroupId
+                version pubVersion
+            }
+        }
+        repositories {
+            maven {
+                url "${System.getProperty('user.home')}/releases/maven/${project.repo}"
+            }
+        }
+    }
 }
