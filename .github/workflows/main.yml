@@ -21,10 +21,10 @@ jobs:
         include:
           - container: wpilib/raspbian-cross-ubuntu:bookworm-22.04
             artifact-name: Arm32
-            build-options: -Pplatform=linux-arm32
+            build-options: -Pplatform=linux-arm32 -Ptoolchain=/usr/local/toolchain-config.cmake
           - container: wpilib/aarch64-cross-ubuntu:bookworm-22.04
             artifact-name: Arm64
-            build-options: -Pplatform=linux-arm64
+            build-options: -Pplatform=linux-arm64 -Ptoolchain=/usr/local/toolchain-config.cmake
           - container: wpilib/ubuntu-base:22.04
             artifact-name: Linux
             build-options:
@@ -38,11 +38,11 @@ jobs:
         name: Install dependencies
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
       - uses: actions/setup-java@v4
         with:
           java-version: 17
-          distribution: 'temurin'
+          distribution: "temurin"
       - run: ./gradlew publish ${{ matrix.build-options }}
         name: Build with Gradle
       - run: ls build*/install/lib/*
@@ -70,11 +70,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
       - uses: actions/setup-java@v4
         with:
           java-version: 17
-          distribution: 'temurin'
+          distribution: "temurin"
       - uses: ilammy/msvc-dev-cmd@v1.13.0
         with:
           arch: ${{ matrix.tool-arch }}
@@ -94,11 +94,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
       - uses: actions/setup-java@v4
         with:
           java-version: 17
-          distribution: 'temurin'
+          distribution: "temurin"
       - run: brew install cmake ninja
         name: install ninja
       - run: ./gradlew publish
@@ -136,7 +136,7 @@ jobs:
           ./gradlew publish -Pthirdparty
         working-directory: combiner
         env:
-          RUN_AZURE_ARTIFACTORY_RELEASE: 'TRUE'
+          RUN_AZURE_ARTIFACTORY_RELEASE: "TRUE"
           ARTIFACTORY_PUBLISH_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PUBLISH_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
       - uses: actions/upload-artifact@v4

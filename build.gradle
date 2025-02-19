@@ -68,7 +68,7 @@ ext.platformClassifier = ext.platformPath.replaceFirst('/', '')
 if (!project.hasProperty('repo')) {
     ext.repo = 'development'
 }
-def pubVersion = "$ext.version-1"
+def pubVersion = "$ext.version-2"
 
 def outputsFolder = file("$project.buildDir/outputs")
 
@@ -94,11 +94,18 @@ ext.addTaskToCopyAllOutputs = { task ->
 
 ['Debug', 'RelWithDebInfo'].each { buildtype ->
     task "configure$buildtype" (type: Exec) {
-        def baseArgs = ["-B", "build$buildtype", "-DCMAKE_BUILD_TYPE=$buildtype", "-G", "Ninja"]
+        def baseArgs = ["-B", "build$buildtype", "-DCMAKE_BUILD_TYPE=$buildtype", "-G", "Ninja", "--fresh"]
         if (platform == "windows-arm64") {
             // Need to set CMAKE_CROSSCOMPILING because getarch can't be crosscompiled and executed on the host.
             // Also, TARGET must be generic. You need to set it if crosscompiling, but setting it to ARMV8, it will try to use assembly, which fails on Windows
             baseArgs += ["-DCMAKE_CROSSCOMPILING=1", "-DCMAKE_SYSTEM_NAME=Windows", "-DCMAKE_SYSTEM_PROCESSOR=ARM64", "-DTARGET=GENERIC", "-DARCH=ARM64"]
+        } else if (platform.startsWith("linux-arm64")) {
+            baseArgs += ["-DTARGET=ARMV8", "-DARCH=ARM64"]
+        } else if (platform.startsWith("linux-arm32")) {
+            baseArgs += ["-DTARGET=ARMV6", "-DARCH=ARM"]
+        }
+        if (project.hasProperty("toolchain")) {
+            baseArgs += ["--toolchain=$toolchain"]
         }
         outputs.dir "build$buildtype"
         executable "cmake"
