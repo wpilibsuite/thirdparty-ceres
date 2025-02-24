@@ -6,12 +6,16 @@ cmake_minimum_required(VERSION 3.25)
 set(CMAKE_OSX_ARCHITECTURES arm64 x86_64)
 set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
 project(thirdparty-ceres C CXX)
-
+if(TOOLCHAIN_TRIPLE STREQUAL aarch64-linux-gnu)
+    # Hack around opensdk not having the wrong arch and Ceres not being able to detect the Eigen version when on aarch64
+    set(CMAKE_SYSTEM_PROCESSOR ARM64)
+endif()
 set(BUILD_SHARED_LIBS OFF)
 set(BUILD_TESTING OFF)
 set(BUILD_EXAMPLES OFF)
 
 set(NO_CBLAS ON)
+set(NO_LAPACKE ON)
 set(C_LAPACK ON)
 set(USE_LOCKING ON)
 set(USE_THREAD OFF)
@@ -19,13 +23,12 @@ set(NOFORTRAN ON)
 
 set(SUITESPARSE_ENABLE_PROJECTS cholmod)
 set(SUITESPARSE_USE_CUDA OFF)
+set(SUITESPARSE_USE_FORTRAN OFF)
+set(SUITESPARSE_USE_OPENMP OFF)
 set(SUITESPARSE_USE_PYTHON OFF)
 set(CHOLMOD_GPL OFF)
 if(NOT APPLE)
     set(BLA_VENDOR OpenBLAS)
-endif()
-if(MSVC)
-    set(SUITESPARSE_USE_FORTRAN OFF)
 endif()
 
 set(EIGEN_BUILD_CMAKE_PACKAGE ON)
@@ -63,6 +66,7 @@ fetchcontent_declare(
     GIT_TAG 0fb2ed140d4fc0108553ecfb25f2d7fc1a9319a1
     OVERRIDE_FIND_PACKAGE 
     PATCH_COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/0003-Make-assignment-constexpr.patch
+    UPDATE_DISCONNECTED 1
 )
 
 fetchcontent_declare(
