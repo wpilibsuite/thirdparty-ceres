@@ -48,7 +48,7 @@ if(NOT APPLE)
     fetchcontent_declare(
         BLAS
         GIT_REPOSITORY https://github.com/OpenMathLib/OpenBLAS.git
-        GIT_TAG v0.3.29
+        GIT_TAG v0.3.30
         OVERRIDE_FIND_PACKAGE
     )
 endif()
@@ -56,17 +56,15 @@ endif()
 fetchcontent_declare(
     SuiteSparse
     GIT_REPOSITORY https://github.com/DrTimothyAldenDavis/SuiteSparse.git
-    GIT_TAG v7.8.3
+    GIT_TAG v7.11.0
     OVERRIDE_FIND_PACKAGE
 )
 
 fetchcontent_declare(
     Eigen3
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-    GIT_TAG 0fb2ed140d4fc0108553ecfb25f2d7fc1a9319a1
+    GIT_TAG d81aa18f4dc56264b2cd7e2f230807d776a2d385
     OVERRIDE_FIND_PACKAGE 
-    PATCH_COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/0003-Make-assignment-constexpr.patch
-    UPDATE_DISCONNECTED 1
 )
 
 fetchcontent_declare(
