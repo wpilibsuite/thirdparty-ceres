@@ -107,6 +107,7 @@ jobs:
             brew install cmake
           else
             echo "CMake already installed"
+          fi
           brew install ninja
 
       - run: ./gradlew publish
