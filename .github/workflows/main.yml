@@ -99,8 +99,16 @@ jobs:
         with:
           java-version: 17
           distribution: "temurin"
-      - run: brew install cmake ninja
-        name: install ninja
+
+      - name: Install dependencies
+        run: |
+          if ! command -v cmake &> /dev/null; then
+            echo "CMake not found. Installing..."
+            brew install cmake
+          else
+            echo "CMake already installed"
+          brew install ninja
+
       - run: ./gradlew publish
         name: Build with Gradle
       - run: ls build*/install/lib/*
