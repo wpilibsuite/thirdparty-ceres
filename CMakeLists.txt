@@ -44,6 +44,10 @@ set(SUITESPARSE OFF)
 set(SCHUR_SPECIALIZATIONS OFF)
 include(FetchContent)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
+# We need PIC for this to work as a shared library
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 if(NOT APPLE)
     fetchcontent_declare(
         BLAS
