@@ -68,13 +68,13 @@ ext.platformClassifier = ext.platformPath.replaceFirst('/', '')
 if (!project.hasProperty('repo')) {
     ext.repo = 'development'
 }
-def pubVersion = "$ext.version-2"
+def pubVersion = "$ext.version-1"
 
 def outputsFolder = file("$project.buildDir/outputs")
 
 def baseArtifactId = 'ceres'
-def artifactGroupId = 'edu.wpi.first.thirdparty.frc2026.ceres'
-def zipBaseName = '_GROUP_edu_wpi_first_thirdparty_frc2026_ceres_ID_ceres-cpp_CLS'
+def artifactGroupId = 'org.wpilib.thirdparty.frc2027.ceres'
+def zipBaseName = '_GROUP_org_wpilib_thirdparty_frc2027_ID_ceres_CLS'
 
 def versionFile = file("$outputsFolder/version.txt")
 def licenseFiles = files("LICENSE.md", "AMD_LICENSE", "CAMD_LICENSE", "CCOLAMD_LICENSE", "CERES_LICENSE", "CHOLMOD_LICENSE", "COLAMD_LICENSE", "EIGEN_LICENSE", "OPENBLAS_LICENSE",)
@@ -97,12 +97,10 @@ ext.addTaskToCopyAllOutputs = { task ->
         def baseArgs = ["-B", "build$buildtype", "-DCMAKE_BUILD_TYPE=$buildtype", "-G", "Ninja", "--fresh"]
         if (platform == "windows-arm64") {
             // Need to set CMAKE_CROSSCOMPILING because getarch can't be crosscompiled and executed on the host.
-            // Also, TARGET must be generic. You need to set it if crosscompiling, but setting it to ARMV8, it will try to use assembly, which fails on Windows
+            // Also, TARGET must be generic. You need to set it if crosscompiling, but setting it to ARMV8 causes it to try to use assembly, which fails on Windows
             baseArgs += ["-DCMAKE_CROSSCOMPILING=1", "-DCMAKE_SYSTEM_NAME=Windows", "-DCMAKE_SYSTEM_PROCESSOR=ARM64", "-DTARGET=GENERIC", "-DARCH=ARM64"]
         } else if (platform.startsWith("linux-arm64") || platform.startsWith("linux-systemcore")) {
             baseArgs += ["-DTARGET=ARMV8", "-DARCH=ARM64"]
-        } else if (platform.startsWith("linux-arm32")) {
-            baseArgs += ["-DTARGET=ARMV6", "-DARCH=ARM"]
         }
         if (project.hasProperty("toolchain")) {
             baseArgs += ["--toolchain=$toolchain"]
@@ -305,13 +303,13 @@ model {
                 artifact cppLibsZipStaticDebug
 
                 artifactId = "${baseArtifactId}-cpp"
-                groupId artifactGroupId
-                version pubVersion
+                groupId = artifactGroupId
+                version = pubVersion
             }
         }
         repositories {
             maven {
-                url "${System.getProperty('user.home')}/releases/maven/${project.repo}"
+                url = "${System.getProperty('user.home')}/releases/maven/${project.repo}"
             }
         }
     }

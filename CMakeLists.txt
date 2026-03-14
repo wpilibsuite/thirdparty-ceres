@@ -43,7 +43,6 @@ set(SUITESPARSE OFF)
 # We don't use the SPARSE_SCHUR solver, so the generated code is just file size bloat
 set(SCHUR_SPECIALIZATIONS OFF)
 include(FetchContent)
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 # We need PIC for this to work as a shared library
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -67,7 +66,7 @@ fetchcontent_declare(
 fetchcontent_declare(
     Eigen3
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-    GIT_TAG d81aa18f4dc56264b2cd7e2f230807d776a2d385
+    GIT_TAG 5.0.1
     OVERRIDE_FIND_PACKAGE 
 )
 
