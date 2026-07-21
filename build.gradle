@@ -68,13 +68,13 @@ ext.platformClassifier = ext.platformPath.replaceFirst('/', '')
 if (!project.hasProperty('repo')) {
     ext.repo = 'development'
 }
-def pubVersion = "2027-$ext.version-1"
+def pubVersion = "2027-$ext.version-2"
 
 def outputsFolder = file("$project.buildDir/outputs")
 
 def baseArtifactId = 'ceres'
 def artifactGroupId = 'org.wpilib.thirdparty.ceres'
-def zipBaseName = '_GROUP_org_wpilib_thirdparty_ID_ceres_CLS'
+def zipBaseName = '_GROUP_org_wpilib_thirdparty_ceres_ID_ceres_CLS'
 
 def versionFile = file("$outputsFolder/version.txt")
 def licenseFiles = files("LICENSE.md", "AMD_LICENSE", "CAMD_LICENSE", "CCOLAMD_LICENSE", "CERES_LICENSE", "CHOLMOD_LICENSE", "COLAMD_LICENSE", "EIGEN_LICENSE", "OPENBLAS_LICENSE",)
